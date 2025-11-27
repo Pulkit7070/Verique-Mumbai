@@ -21,9 +21,8 @@ export default function DocsPage() {
           <h2 className="text-2xl font-bold text-slate-900 mb-4">Quick Start</h2>
           <div className="bg-slate-900 rounded-xl p-6 overflow-x-auto">
             <pre className="text-green-400 text-sm">
-{`curl -X POST https://api.trustlens.io/v1/verify \\
+{`curl -X POST http://127.0.0.1:8000/api/v1/verify \\
   -H "Content-Type: application/json" \\
-  -H "Authorization: Bearer YOUR_API_KEY" \\
   -d '{
     "text": "Our product increases productivity by 300%.",
     "vertical": "saas"
@@ -38,19 +37,19 @@ export default function DocsPage() {
           
           <EndpointCard
             method="POST"
-            path="/v1/verify"
+            path="/api/v1/verify"
             description="Verify text content and get claim-level verdicts"
           />
           
           <EndpointCard
             method="POST"
-            path="/v1/verify/url"
+            path="/api/v1/verify/url"
             description="Fetch and verify content from a URL"
           />
           
           <EndpointCard
             method="GET"
-            path="/v1/verify/:id"
+            path="/api/v1/verify/:id"
             description="Get verification results by ID"
           />
         </section>
