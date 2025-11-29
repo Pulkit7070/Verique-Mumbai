@@ -80,7 +80,7 @@ yarn-error.log*
 # Next.js
 .next/
 out/
-
+pip_downloads/
 # Build outputs
 dist/
 build/
