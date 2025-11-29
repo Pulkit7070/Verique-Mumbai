@@ -15,10 +15,10 @@ export default function AboutPage() {
             <Shield className="w-10 h-10 text-green-600" />
           </div>
           <h1 className="text-4xl font-bold text-slate-900 mb-4">
-            About TrustLens
+            About Verique
           </h1>
           <p className="text-xl text-slate-600 max-w-2xl mx-auto">
-            We believe trust should be transparent, not opaque. TrustLens helps 
+            We believe trust should be transparent, not opaque. Verique helps 
             you understand the factual basis of any content — without telling you 
             what to think.
           </p>
@@ -33,7 +33,7 @@ export default function AboutPage() {
             </h2>
             <p className="text-slate-700 text-lg leading-relaxed">
               In a world flooded with content, separating fact from fiction shouldn&apos;t 
-              require hours of research. TrustLens uses AI to do the heavy lifting — 
+              require hours of research. Verique uses AI to do the heavy lifting — 
               extracting claims, finding evidence, and presenting it transparently so 
               <strong> you</strong> can make informed decisions.
             </p>
@@ -160,7 +160,7 @@ export default function AboutPage() {
             href="/"
             className="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-8 py-4 rounded-xl font-semibold transition-colors"
           >
-            Try TrustLens Now →
+            Try Verique Now →
           </a>
         </section>
       </main>

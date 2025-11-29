@@ -17,16 +17,24 @@ class CacheManager:
     
     def __init__(self):
         self._redis: Optional[redis.Redis] = None
+        self._enabled = hasattr(settings, 'REDIS_URL') and settings.REDIS_URL is not None
     
     async def connect(self):
         """Connect to Redis."""
+        if not self._enabled:
+            return
+        
         if not self._redis:
-            self._redis = redis.from_url(
-                settings.REDIS_URL,
-                encoding="utf-8",
-                decode_responses=True
-            )
-            logger.info("Connected to Redis")
+            try:
+                self._redis = redis.from_url(
+                    settings.REDIS_URL,
+                    encoding="utf-8",
+                    decode_responses=True
+                )
+                logger.info("Connected to Redis")
+            except Exception as e:
+                logger.warning("Redis connection failed, caching disabled", error=str(e))
+                self._enabled = False
     
     async def disconnect(self):
         """Disconnect from Redis."""
@@ -37,14 +45,18 @@ class CacheManager:
     
     async def get(self, key: str) -> Optional[Any]:
         """Get value from cache."""
+        if not self._enabled:
+            return None
+            
         await self.connect()
         try:
-            value = await self._redis.get(key)
-            if value:
-                return json.loads(value)
+            if self._redis:
+                value = await self._redis.get(key)
+                if value:
+                    return json.loads(value)
             return None
         except Exception as e:
-            logger.error("Cache get error", key=key, error=str(e))
+            logger.debug("Cache get error (Redis unavailable)", key=key)
             return None
     
     async def set(
@@ -54,27 +66,37 @@ class CacheManager:
         ttl: int = None
     ) -> bool:
         """Set value in cache."""
+        if not self._enabled:
+            return False
+            
         await self.connect()
         try:
-            ttl = ttl or settings.CACHE_TTL_SECONDS
-            await self._redis.set(
-                key, 
-                json.dumps(value), 
-                ex=ttl
-            )
-            return True
+            if self._redis:
+                ttl = ttl or settings.CACHE_TTL_SECONDS
+                await self._redis.set(
+                    key, 
+                    json.dumps(value), 
+                    ex=ttl
+                )
+                return True
+            return False
         except Exception as e:
-            logger.error("Cache set error", key=key, error=str(e))
+            logger.debug("Cache set error (Redis unavailable)", key=key)
             return False
     
     async def delete(self, key: str) -> bool:
         """Delete value from cache."""
+        if not self._enabled:
+            return False
+            
         await self.connect()
         try:
-            await self._redis.delete(key)
-            return True
+            if self._redis:
+                await self._redis.delete(key)
+                return True
+            return False
         except Exception as e:
-            logger.error("Cache delete error", key=key, error=str(e))
+            logger.debug("Cache delete error (Redis unavailable)", key=key)
             return False
     
     @staticmethod

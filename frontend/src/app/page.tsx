@@ -61,7 +61,7 @@ export default function Home() {
             <section className="py-24 bg-white border-t border-slate-100">
               <div className="container mx-auto px-4">
                 <div className="text-center mb-16">
-                  <h2 className="text-3xl font-bold text-slate-900 mb-4">How TrustLens Works</h2>
+                  <h2 className="text-3xl font-bold text-slate-900 mb-4">How Verique Works</h2>
                   <p className="text-slate-600 max-w-2xl mx-auto">
                     Our multi-agent AI pipeline breaks down content, finds evidence, and evaluates truthfulness in seconds.
                   </p>
@@ -168,10 +168,10 @@ export default function Home() {
           <div className="flex flex-col md:flex-row justify-between items-center gap-6">
             <div className="flex items-center gap-2">
               <Shield className="h-6 w-6 text-green-600" />
-              <span className="font-bold text-slate-900">TrustLens</span>
+              <span className="font-bold text-slate-900">Verique</span>
             </div>
             <div className="text-slate-500 text-sm">
-              © 2025 TrustLens. All rights reserved.
+              © 2025 Verique. All rights reserved.
             </div>
             <div className="flex gap-6 text-sm font-medium text-slate-600">
               <a href="#" className="hover:text-green-600 transition-colors">Privacy</a>

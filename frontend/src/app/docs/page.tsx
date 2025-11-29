@@ -13,7 +13,7 @@ export default function DocsPage() {
           API Documentation
         </h1>
         <p className="text-xl text-slate-600 mb-12">
-          Integrate TrustLens verification into your applications with our REST API.
+          Integrate Verique verification into your applications with our REST API.
         </p>
 
         {/* Quick Start */}

@@ -6,7 +6,7 @@ import { Providers } from './providers';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'TrustLens - AI Trust & Context Layer',
+  title: 'Verique - AI Trust & Context Layer',
   description: 'Verify factual claims in any web content with AI-powered evidence retrieval',
   keywords: ['fact-checking', 'AI', 'verification', 'trust', 'evidence'],
 };

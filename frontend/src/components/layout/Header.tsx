@@ -10,7 +10,7 @@ export function Header() {
         <div className="flex items-center justify-between h-16">
           <Link href="/" className="flex items-center gap-2">
             <Shield className="h-8 w-8 text-green-600" />
-            <span className="text-xl font-bold text-slate-900">TrustLens</span>
+            <span className="text-xl font-bold text-slate-900">Verique</span>
           </Link>
           
           <nav className="flex items-center gap-6">
@@ -27,7 +27,7 @@ export function Header() {
               About
             </Link>
             <a
-              href="https://github.com/trustlens/trustlens"
+              href="https://github.com/Pulkit7070/Verique-Mumbai"
               target="_blank"
               rel="noopener noreferrer"
               className="text-slate-600 hover:text-slate-900 transition-colors"
