@@ -11,7 +11,7 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
  * Verify text content
  */
 export async function verifyContent(request: VerifyRequest): Promise<VerificationResult> {
-  const response = await fetch(`${API_BASE_URL}/api/v1/verify`, {
+  const response = await fetch(`${API_BASE_URL}/v1/verify`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -36,7 +36,7 @@ export async function verifyUrl(url: string, vertical?: string): Promise<Verific
     vertical: vertical as any,
   };
 
-  const response = await fetch(`${API_BASE_URL}/api/v1/verify/url`, {
+  const response = await fetch(`${API_BASE_URL}/v1/verify/url`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -56,7 +56,7 @@ export async function verifyUrl(url: string, vertical?: string): Promise<Verific
  * Get verification status by ID
  */
 export async function getVerificationStatus(verificationId: string): Promise<any> {
-  const response = await fetch(`${API_BASE_URL}/api/v1/verify/${verificationId}`);
+  const response = await fetch(`${API_BASE_URL}/v1/verify/${verificationId}`);
 
   if (!response.ok) {
     throw new Error(`HTTP error! status: ${response.status}`);
@@ -69,7 +69,7 @@ export async function getVerificationStatus(verificationId: string): Promise<any
  * Health check
  */
 export async function healthCheck(): Promise<{ status: string }> {
-  const response = await fetch(`${API_BASE_URL}/api/v1/health`);
+  const response = await fetch(`${API_BASE_URL}/v1/health`);
 
   if (!response.ok) {
     throw new Error(`HTTP error! status: ${response.status}`);

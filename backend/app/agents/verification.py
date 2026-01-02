@@ -1,14 +1,38 @@
 """
 Verification Agent - Generates verdicts for claims based on evidence
 """
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Literal
 import json
 import structlog
 from groq import AsyncGroq
+from pydantic import BaseModel, Field, ValidationError, field_validator
 
 from app.core.config import settings
 
 logger = structlog.get_logger()
+
+
+class VerdictResponse(BaseModel):
+    """Verdict response structure."""
+    verdict: Literal[
+        "strongly_supported",
+        "supported",
+        "mixed",
+        "weak",
+        "contradicted",
+        "outdated",
+        "not_verifiable"
+    ] = Field(..., description="Verdict classification")
+    confidence: float = Field(..., ge=0.0, le=1.0, description="Confidence score")
+    reasoning: str = Field(..., min_length=10, description="Reasoning for the verdict")
+    supporting_sources: List[str] = Field(default_factory=list, description="URLs supporting the claim")
+    contradicting_sources: List[str] = Field(default_factory=list, description="URLs contradicting the claim")
+    
+    @field_validator('confidence')
+    @classmethod
+    def clamp_confidence(cls, v: float) -> float:
+        """Ensure confidence is between 0 and 1."""
+        return max(0.0, min(1.0, v))
 
 
 VERIFICATION_PROMPT = """You are an expert fact-checker. Analyze this claim against the provided evidence.
@@ -22,7 +46,7 @@ EVIDENCE:
 Based on the evidence, provide your verdict:
 
 1. **Verdict** (choose one):
-   - strongly_supported: Multiple authoritative sources confirm this claim
+   - strongly_supported: Multiple high-quality sources confirm this claim
    - supported: Evidence generally supports this claim
    - mixed: Evidence is conflicting or partial
    - weak: Limited or unreliable evidence
@@ -32,7 +56,21 @@ Based on the evidence, provide your verdict:
 
 2. **Confidence** (0.0 to 1.0): How confident are you in this verdict?
 
+   CONFIDENCE CALIBRATION GUIDE:
+   - 0.95+: 3+ high-reputation sources (0.9+) fully agree, claim is specific and verifiable
+   - 0.85-0.94: 2+ high-reputation sources agree, claim is clear
+   - 0.70-0.84: 1 high-reputation source OR 2+ medium sources (0.7+) agree
+   - 0.50-0.69: Single medium-reputation source OR mixed/conflicting evidence
+   - 0.30-0.49: Weak evidence, low-reputation sources, or mostly contradicting
+   - Below 0.30: No credible evidence or strong contradictions
+
 3. **Reasoning**: Brief explanation (2-3 sentences) of why you reached this verdict.
+   
+   WHEN EVIDENCE CONFLICTS:
+   - Always mention BOTH supporting and contradicting evidence
+   - Use "mixed" verdict
+   - Explain the nature of the disagreement
+   - Consider source quality differences (high-reputation sources weigh more)
 
 4. **Supporting Sources**: List URLs that support the claim (if any)
 
@@ -47,19 +85,20 @@ Respond in JSON format:
     "contradicting_sources": ["url1"]
 }}
 
-IMPORTANT:
+CRITICAL RULES:
 - Base your verdict ONLY on the provided evidence
-- If evidence is insufficient, say so honestly
+- Higher source reputation (shown in evidence) = more weight in verdict
+- If evidence is insufficient, use "not_verifiable" + low confidence
 - Don't assume facts not in the evidence
 - Be conservative - use "mixed" or "weak" if uncertain
+- When sources disagree, check their reputation scores
 - Return ONLY valid JSON, no other text"""
+
 
 
 class VerificationAgent:
     """
     Generates verdicts for claims based on retrieved evidence.
-    
-    Uses Groq's Llama 3.1 70B (FREE) for high-quality reasoning.
     """
     
     def __init__(self):
@@ -159,20 +198,49 @@ class VerificationAgent:
         # Parse response
         content = response.choices[0].message.content
         
-        # Extract JSON from response
-        start = content.find('{')
-        end = content.rfind('}') + 1
-        if start >= 0 and end > start:
-            result = json.loads(content[start:end])
-        else:
-            raise ValueError("Could not parse verdict JSON")
+        # Parse and validate response
+        try:
+            result = self._parse_and_validate_response(content)
+        except (json.JSONDecodeError, ValidationError, ValueError) as e:
+            logger.error("Failed to parse verdict response", error=str(e))
+            raise ValueError(f"Could not parse verdict JSON: {str(e)}")
         
         # Validate and normalize
-        result["verdict"] = result.get("verdict", "not_verifiable").lower()
-        result["confidence"] = max(0.0, min(1.0, float(result.get("confidence", 0.5))))
-        result["reasoning"] = result.get("reasoning", "")
-        result["supporting_sources"] = result.get("supporting_sources", [])
-        result["contradicting_sources"] = result.get("contradicting_sources", [])
         result["model_used"] = self.model
         
         return result
+    
+    def _parse_and_validate_response(self, content: str) -> Dict[str, Any]:
+        """
+        Parse and validate LLM verdict response.
+        
+        Args:
+            content: Raw LLM response
+            
+        Returns:
+            Validated verdict dictionary
+            
+        Raises:
+            ValueError: If JSON cannot be found or parsed
+            ValidationError: If response doesn't match schema
+        """
+        # Extract JSON from response
+        start = content.find('{')
+        end = content.rfind('}') + 1
+        
+        if start < 0 or end <= start:
+            logger.error(
+                "No JSON object found in response",
+                content_preview=content[:200]
+            )
+            raise ValueError("No JSON object found in LLM response")
+        
+        # Parse JSON
+        json_str = content[start:end]
+        parsed = json.loads(json_str)
+        
+        # Validate with Pydantic
+        validated = VerdictResponse(**parsed)
+        
+        # Convert to dict
+        return validated.model_dump()

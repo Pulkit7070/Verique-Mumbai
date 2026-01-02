@@ -8,6 +8,7 @@ from urllib.parse import urlparse, quote_plus
 import structlog
 
 from app.core.config import settings
+from app.agents.domain_reputation import get_domain_score
 
 logger = structlog.get_logger()
 
@@ -16,8 +17,7 @@ class RetrievalAgent:
     """
     Fetches evidence from web sources for claim verification.
     
-    Uses DuckDuckGo (FREE, no API key needed) as primary search.
-    Falls back to SerpAPI or Google CSE if configured.
+    Uses DuckDuckGo as primary search, falls back to SerpAPI or Google CSE.
     """
     
     def __init__(self):
@@ -110,7 +110,7 @@ class RetrievalAgent:
             return await self._search_duckduckgo(query)
     
     async def _search_duckduckgo(self, query: str) -> List[Dict[str, Any]]:
-        """Search using DuckDuckGo HTML (FREE, no API key needed)."""
+        """Search using DuckDuckGo HTML."""
         try:
             async with httpx.AsyncClient(timeout=15.0) as client:
                 # DuckDuckGo HTML endpoint
@@ -155,13 +155,17 @@ class RetrievalAgent:
                 if results:
                     return results
                 else:
-                    # Fallback to mock if no results
-                    logger.warning("DuckDuckGo returned no results, using mock")
-                    return await self._mock_search(query)
+                    # No results found - return empty list with warning
+                    logger.warning(
+                        "DuckDuckGo returned no results",
+                        query=query[:50]
+                    )
+                    return []
                     
         except Exception as e:
-            logger.error("DuckDuckGo search failed", error=str(e))
-            return await self._mock_search(query)
+            logger.error("DuckDuckGo search failed", error=str(e), query=query[:50])
+            # Return empty list instead of fake data - better than lying!
+            return []
     
     async def _search_serpapi(self, query: str) -> List[Dict[str, Any]]:
         """Search using SerpAPI."""
@@ -233,58 +237,12 @@ class RetrievalAgent:
             logger.error("Google search failed", error=str(e))
             return []
     
-    async def _mock_search(self, query: str) -> List[Dict[str, Any]]:
-        """Mock search for development without API keys."""
-        logger.warning("Using mock search results")
-        
-        # Return simulated results
-        return [
-            {
-                "url": f"https://example.com/article/{hash(query) % 1000}",
-                "title": f"Article about: {query[:50]}",
-                "snippet": f"This is relevant information about {query[:30]}... Multiple sources confirm this data.",
-                "domain": "example.com",
-                "published_at": "2024-01-15",
-                "relevance_score": 0.7,
-                "domain_reputation": 0.6
-            },
-            {
-                "url": f"https://trusted-source.org/data/{hash(query) % 500}",
-                "title": f"Data and statistics: {query[:40]}",
-                "snippet": f"According to verified sources, {query[:25]}... Our research shows...",
-                "domain": "trusted-source.org",
-                "published_at": "2024-03-20",
-                "relevance_score": 0.8,
-                "domain_reputation": 0.85
-            }
-        ]
-    
+
     def _get_domain_reputation(self, domain: str) -> float:
         """
-        Get reputation score for a domain.
+        Get reputation score for a domain using comprehensive database.
         
-        In production, this would query the domains table.
-        For now, use simple heuristics.
+        Now uses domain_reputation.py with 100+ categorized domains
+        instead of hardcoded lists.
         """
-        # High-trust domains
-        trusted_domains = [
-            "wikipedia.org", "github.com", "reuters.com", "bbc.com",
-            "nytimes.com", "nature.com", "science.org", "gov",
-            "edu", "who.int", "cdc.gov"
-        ]
-        
-        for trusted in trusted_domains:
-            if trusted in domain:
-                return 0.9
-        
-        # Medium trust for known platforms
-        medium_domains = [
-            "medium.com", "linkedin.com", "forbes.com", "techcrunch.com"
-        ]
-        
-        for medium in medium_domains:
-            if medium in domain:
-                return 0.7
-        
-        # Default score
-        return 0.5
+        return get_domain_score(domain)

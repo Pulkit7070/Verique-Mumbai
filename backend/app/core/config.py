@@ -17,7 +17,7 @@ class Settings(BaseSettings):
     # API Configuration
     API_HOST: str = "0.0.0.0"
     API_PORT: int = 8000
-    API_PREFIX: str = "/api/v1"
+    API_PREFIX: str = "/v1"
     SECRET_KEY: str = "change-me-in-production"
     
     # CORS
@@ -39,7 +39,7 @@ class Settings(BaseSettings):
     SERPAPI_API_KEY: Optional[str] = None
     GOOGLE_API_KEY: Optional[str] = None
     GOOGLE_CSE_ID: Optional[str] = None
-    USE_FREE_SEARCH: bool = True  # Use DuckDuckGo if no API keys
+    USE_FREE_SEARCH: bool = True
     
     # Rate Limiting
     RATE_LIMIT_PER_MINUTE: int = 10
