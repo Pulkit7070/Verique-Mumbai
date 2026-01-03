@@ -32,7 +32,7 @@ const DEMO_EXAMPLES = [
   {
     id: 'python',
     label: '✓ Easy Win',
-    text: 'Python was created by Guido van Rossum in 1991.',
+    text: 'Python was first released by Guido van Rossum in 1991.',
     description: 'Clear factual claim with strong evidence'
   },
   {
