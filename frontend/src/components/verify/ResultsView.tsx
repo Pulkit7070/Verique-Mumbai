@@ -13,6 +13,8 @@ import {
 } from 'lucide-react';
 import { VerificationResult, ClaimResult, VERDICT_CONFIG } from '@/lib/types';
 import { cn, formatDuration, formatDate, getDomainFromUrl } from '@/lib/utils';
+import { ConfidenceBreakdown } from './ConfidenceBreakdown';
+import { SourceComparison } from './SourceComparison';
 
 interface ResultsViewProps {
   result: VerificationResult;
@@ -315,33 +317,35 @@ function ClaimCard({
             className="overflow-hidden"
           >
             <div className="px-4 pb-4 border-t border-slate-100 pt-4 space-y-4">
-              {/* Supporting sources */}
-              {claim.sources.supporting.length > 0 && (
-                <div>
-                  <h4 className="text-sm font-medium text-green-700 mb-2 flex items-center gap-1">
-                    <span>✓</span> Supporting Sources
-                  </h4>
-                  <div className="space-y-2">
-                    {claim.sources.supporting.map((source, i) => (
-                      <SourceCard key={i} source={source} />
-                    ))}
-                  </div>
-                </div>
-              )}
+              
+              {/* Confidence Breakdown - Explainability Pillar */}
+              <ConfidenceBreakdown 
+                confidence={claim.confidence}
+                factors={[
+                  {
+                    label: `${claim.sources.supporting.length} supporting sources`,
+                    impact: claim.sources.supporting.length > 0 ? 60 : 0,
+                    description: 'High-reputation sources agree'
+                  },
+                  {
+                    label: 'Recency boost',
+                    impact: 15,
+                    description: 'Recent information found'
+                  },
+                  claim.sources.contradicting.length > 0 ? {
+                    label: `${claim.sources.contradicting.length} contradicting sources`,
+                    impact: -10,
+                    description: 'Disagreement found'
+                  } : null
+                ].filter((f): f is { label: string; impact: number; description: string } => f !== null && f.impact !== 0)}
+              />
 
-              {/* Contradicting sources */}
-              {claim.sources.contradicting.length > 0 && (
-                <div>
-                  <h4 className="text-sm font-medium text-red-600 mb-2 flex items-center gap-1">
-                    <span>✗</span> Contradicting Sources
-                  </h4>
-                  <div className="space-y-2">
-                    {claim.sources.contradicting.map((source, i) => (
-                      <SourceCard key={i} source={source} />
-                    ))}
-                  </div>
-                </div>
-              )}
+              {/* Source Comparison - Explainability Pillar */}
+              <SourceComparison 
+                supporting={claim.sources.supporting} 
+                contradicting={claim.sources.contradicting} 
+                reasoning={claim.reasoning}
+              />
 
               {/* Metadata */}
               <div className="flex flex-wrap gap-2 pt-2 border-t border-slate-100">

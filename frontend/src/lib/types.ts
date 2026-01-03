@@ -51,6 +51,8 @@ export interface SourceInfo {
   role?: SourceRole;
 }
 
+export type Source = SourceInfo;
+
 export interface ClaimSources {
   supporting: SourceInfo[];
   contradicting: SourceInfo[];

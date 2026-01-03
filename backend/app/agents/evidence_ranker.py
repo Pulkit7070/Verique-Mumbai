@@ -33,12 +33,11 @@ Respond with just the number (e.g., 0.8)
 class EvidenceRankerAgent:
     """
     Ranks evidence by relevance, recency, and source reputation.
-    Uses Groq's fast Llama model (FREE) for scoring.
     """
     
     def __init__(self):
         self.client = AsyncGroq(api_key=settings.GROQ_API_KEY)
-        self.model = settings.LLM_MODEL_FAST  # Use faster model for ranking
+        self.model = settings.LLM_MODEL_FAST
         self.max_evidence_per_claim = settings.MAX_EVIDENCE_PER_CLAIM
     
     async def rank_evidence(

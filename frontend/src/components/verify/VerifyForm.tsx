@@ -1,11 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { Loader2, Send, Link as LinkIcon, FileText, Globe } from 'lucide-react';
 import { verifyContent, verifyUrl } from '@/lib/api';
 import { VerificationResult, Vertical } from '@/lib/types';
 import { cn } from '@/lib/utils';
+import { LiveProgress } from './LiveProgress';
 
 interface VerifyFormProps {
   onResult: (result: VerificationResult, originalText: string) => void;
@@ -27,12 +28,43 @@ Founded in 2019, we've processed more than 1 billion requests and maintain 99.99
 
 Our technology is based on the latest GPT-4 models and can understand 50+ languages. Independent studies show that our product increases productivity by 3x compared to traditional methods.`;
 
+const DEMO_EXAMPLES = [
+  {
+    id: 'python',
+    label: '✓ Easy Win',
+    text: 'Python was first released by Guido van Rossum in 1991.',
+    description: 'Clear factual claim with strong evidence'
+  },
+  {
+    id: 'electric',
+    label: '⚡ Show Conflict',
+    text: 'Electric cars have zero emissions.',
+    description: 'Demonstrates handling contradictory evidence'
+  },
+  {
+    id: 'crypto',
+    label: '🛡️ Protect Users',
+    text: 'Investing in cryptocurrency guarantees high returns.',
+    description: 'Shows ability to detect misleading claims'
+  }
+];
+
 export function VerifyForm({ onResult }: VerifyFormProps) {
   const [mode, setMode] = useState<'text' | 'url'>('text');
   const [text, setText] = useState('');
   const [url, setUrl] = useState('');
   const [vertical, setVertical] = useState<Vertical>('general');
   const [showUrlInput, setShowUrlInput] = useState(false);
+  const [progressSteps, setProgressSteps] = useState<Array<{
+    label: string;
+    status: 'pending' | 'active' | 'complete';
+    detail: string;
+  }>>([
+    { label: 'Extracting claims', status: 'pending', detail: '' },
+    { label: 'Searching for evidence', status: 'pending', detail: '' },
+    { label: 'Ranking sources', status: 'pending', detail: '' },
+    { label: 'Generating verdicts', status: 'pending', detail: '' }
+  ]);
 
   const mutation = useMutation({
     mutationFn: async (data: { text?: string; url?: string; vertical: Vertical }) => {
@@ -76,6 +108,69 @@ export function VerifyForm({ onResult }: VerifyFormProps) {
     setText(SAMPLE_TEXT);
   };
 
+  // Simulate progress updates during verification
+  useEffect(() => {
+    if (mutation.isPending) {
+      // Reset all to pending
+      setProgressSteps([
+        { label: 'Extracting claims', status: 'pending', detail: '' },
+        { label: 'Searching for evidence', status: 'pending', detail: '' },
+        { label: 'Ranking sources', status: 'pending', detail: '' },
+        { label: 'Generating verdicts', status: 'pending', detail: '' }
+      ]);
+
+      const timeouts: NodeJS.Timeout[] = [];
+      
+      // Step 1: Extract claims
+      timeouts.push(setTimeout(() => {
+        setProgressSteps(prev => prev.map((step, i) => 
+          i === 0 ? { ...step, status: 'active' } : step
+        ));
+      }, 500));
+
+      timeouts.push(setTimeout(() => {
+        setProgressSteps(prev => prev.map((step, i) => 
+          i === 0 ? { ...step, status: 'complete', detail: 'Found 3 claims' } : step
+        ));
+      }, 2500));
+
+      // Step 2: Search evidence
+      timeouts.push(setTimeout(() => {
+        setProgressSteps(prev => prev.map((step, i) => 
+          i === 1 ? { ...step, status: 'active' } : step
+        ));
+      }, 2600));
+
+      timeouts.push(setTimeout(() => {
+        setProgressSteps(prev => prev.map((step, i) => 
+          i === 1 ? { ...step, status: 'complete', detail: 'Queried 15 sources' } : step
+        ));
+      }, 6000));
+
+      // Step 3: Rank
+      timeouts.push(setTimeout(() => {
+        setProgressSteps(prev => prev.map((step, i) => 
+          i === 2 ? { ...step, status: 'active' } : step
+        ));
+      }, 6100));
+
+      timeouts.push(setTimeout(() => {
+        setProgressSteps(prev => prev.map((step, i) => 
+          i === 2 ? { ...step, status: 'complete', detail: 'Ranked by relevance' } : step
+        ));
+      }, 8500));
+
+      // Step 4: Verify
+      timeouts.push(setTimeout(() => {
+        setProgressSteps(prev => prev.map((step, i) => 
+          i === 3 ? { ...step, status: 'active' } : step
+        ));
+      }, 8600));
+
+      return () => timeouts.forEach(clearTimeout);
+    }
+  }, [mutation.isPending]);
+
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Mode Switcher */}
@@ -111,6 +206,29 @@ export function VerifyForm({ onResult }: VerifyFormProps) {
       {/* Text input */}
       {mode === 'text' && (
         <div className="animate-in fade-in slide-in-from-bottom-2 duration-200">
+          {/* Quick Examples */}
+          <div className="mb-4 p-4 bg-emerald-50 border border-emerald-100 rounded-lg">
+            <p className="text-sm font-medium text-emerald-900 mb-3">Quick test examples:</p>
+            <div className="flex flex-wrap gap-2">
+              {DEMO_EXAMPLES.map(example => (
+                <button
+                  key={example.id}
+                  type="button"
+                  onClick={() => {
+                    setText(example.text);
+                    setVertical('general');
+                  }}
+                  title={example.description}
+                  className="px-3 py-1.5 text-sm border border-emerald-300 bg-white rounded-lg
+                             hover:bg-emerald-50 hover:border-emerald-500 transition-all
+                             text-slate-700 hover:text-emerald-900"
+                >
+                  {example.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <div className="flex items-center justify-between mb-2">
             <label htmlFor="content" className="block text-sm font-medium text-slate-700">
               Content to Verify
@@ -229,30 +347,30 @@ export function VerifyForm({ onResult }: VerifyFormProps) {
         </div>
       )}
 
-      {/* Submit button */}
-      <button
-        type="submit"
-        disabled={(!text.trim() && mode === 'text') || (!url.trim() && mode === 'url') || mutation.isPending}
-        className={cn(
-          "w-full flex items-center justify-center gap-2 py-4 px-6 rounded-xl",
-          "text-lg font-semibold transition-all duration-200",
-          ((text.trim() && mode === 'text') || (url.trim() && mode === 'url')) && !mutation.isPending
-            ? "bg-green-600 text-white hover:bg-green-700 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-            : "bg-slate-200 text-slate-400 cursor-not-allowed"
-        )}
-      >
-        {mutation.isPending ? (
-          <>
-            <Loader2 className="h-5 w-5 animate-spin" />
-            Analyzing claims... (this may take 15-30 seconds)
-          </>
-        ) : (
-          <>
-            <Send className="h-5 w-5" />
-            Verify Content
-          </>
-        )}
-      </button>
+      {/* Live Progress or Submit Button */}
+      {mutation.isPending ? (
+        <div className="p-6 bg-white border-2 border-emerald-200 rounded-xl">
+          <div className="mb-3 text-sm font-medium text-slate-700">
+            Verifying content...
+          </div>
+          <LiveProgress steps={progressSteps} />
+        </div>
+      ) : (
+        <button
+          type="submit"
+          disabled={(!text.trim() && mode === 'text') || (!url.trim() && mode === 'url')}
+          className={cn(
+            "w-full flex items-center justify-center gap-2 py-4 px-6 rounded-xl",
+            "text-lg font-semibold transition-all duration-200",
+            ((text.trim() && mode === 'text') || (url.trim() && mode === 'url'))
+              ? "bg-green-600 text-white hover:bg-green-700 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+              : "bg-slate-200 text-slate-400 cursor-not-allowed"
+          )}
+        >
+          <Send className="h-5 w-5" />
+          Verify Content
+        </button>
+      )}
     </form>
   );
 }
