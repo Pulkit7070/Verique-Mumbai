@@ -27,6 +27,27 @@ Founded in 2019, we've processed more than 1 billion requests and maintain 99.99
 
 Our technology is based on the latest GPT-4 models and can understand 50+ languages. Independent studies show that our product increases productivity by 3x compared to traditional methods.`;
 
+const DEMO_EXAMPLES = [
+  {
+    id: 'python',
+    label: '✓ Easy Win',
+    text: 'Python was created by Guido van Rossum in 1991.',
+    description: 'Clear factual claim with strong evidence'
+  },
+  {
+    id: 'electric',
+    label: '⚡ Show Conflict',
+    text: 'Electric cars have zero emissions.',
+    description: 'Demonstrates handling contradictory evidence'
+  },
+  {
+    id: 'crypto',
+    label: '🛡️ Protect Users',
+    text: 'Investing in cryptocurrency guarantees high returns.',
+    description: 'Shows ability to detect misleading claims'
+  }
+];
+
 export function VerifyForm({ onResult }: VerifyFormProps) {
   const [mode, setMode] = useState<'text' | 'url'>('text');
   const [text, setText] = useState('');
@@ -111,6 +132,29 @@ export function VerifyForm({ onResult }: VerifyFormProps) {
       {/* Text input */}
       {mode === 'text' && (
         <div className="animate-in fade-in slide-in-from-bottom-2 duration-200">
+          {/* Quick Examples */}
+          <div className="mb-4 p-4 bg-emerald-50 border border-emerald-100 rounded-lg">
+            <p className="text-sm font-medium text-emerald-900 mb-3">Quick test examples:</p>
+            <div className="flex flex-wrap gap-2">
+              {DEMO_EXAMPLES.map(example => (
+                <button
+                  key={example.id}
+                  type="button"
+                  onClick={() => {
+                    setText(example.text);
+                    setVertical('general');
+                  }}
+                  title={example.description}
+                  className="px-3 py-1.5 text-sm border border-emerald-300 bg-white rounded-lg
+                             hover:bg-emerald-50 hover:border-emerald-500 transition-all
+                             text-slate-700 hover:text-emerald-900"
+                >
+                  {example.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <div className="flex items-center justify-between mb-2">
             <label htmlFor="content" className="block text-sm font-medium text-slate-700">
               Content to Verify
