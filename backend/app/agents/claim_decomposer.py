@@ -137,6 +137,9 @@ class ClaimDecomposerAgent:
                 claim["id"] = f"clm_{uuid.uuid4().hex[:8]}"
                 claim["is_verifiable"] = True
             
+            # Fix overlapping spans
+            claims = self._fix_overlapping_spans(claims)
+            
             logger.info("Claims extracted", count=len(claims))
             return claims
             
@@ -144,3 +147,43 @@ class ClaimDecomposerAgent:
             logger.error("Claim extraction failed", error=str(e))
             # Return empty list on failure, let pipeline continue
             return []
+    
+    def _fix_overlapping_spans(self, claims: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """
+        Fix overlapping spans by adjusting or removing overlapping claims.
+        Sort by start position and ensure no overlaps.
+        """
+        if not claims:
+            return claims
+        
+        # Sort by span_start
+        sorted_claims = sorted(claims, key=lambda c: c.get("span_start", 0))
+        
+        fixed_claims = []
+        last_end = 0
+        
+        for claim in sorted_claims:
+            start = claim.get("span_start", 0)
+            end = claim.get("span_end", 0)
+            
+            # Apply -1 offset to fix LLM position calculation
+            start = max(0, start - 1)
+            end = max(0, end - 1)
+            
+            # Update claim with corrected positions
+            claim["span_start"] = start
+            claim["span_end"] = end
+            
+            # Skip invalid spans
+            if end <= start:
+                continue
+            
+            # If this claim overlaps with previous, skip it
+            if start < last_end:
+                logger.debug("Skipping overlapping claim", text=claim.get("text", "")[:30])
+                continue
+            
+            fixed_claims.append(claim)
+            last_end = end
+        
+        return fixed_claims
